@@ -35,14 +35,14 @@ def check_password():
     # ログイン画面の表示
     st.title("🔒 ログイン")
     st.text_input(
-        "パスワードを入力してください", 
+        "パスワードを入力せなあかん", 
         type="password", 
         on_change=password_entered, 
         key="password_input"
     )
     
     if "password_correct" in st.session_state and not st.session_state["password_correct"]:
-        st.error("パスワードが違います。")
+        st.error("パスワード間違っとる")
         
     return False
 
@@ -230,9 +230,9 @@ st.sidebar.caption("© 2026 尾崎ガス配管 業務管理システム")
 # 1. ホーム（トップ・ポータル画面）
 # ==========================================
 if st.session_state.current_page == "ホーム":
-  st.title("👨‍🔧🪏 社内ポータルへようこそ")
+  st.title("👨‍🔧🪏 業務管理場へようこそ")
   st.write(
-      "毎日の業務管理、スケジュール確認、および請求書発行をここから行えます。"
+      "毎日の業務管理、スケジュール確認、および請求書発行ができるで。"
   )
 
   st.divider()
@@ -241,7 +241,7 @@ if st.session_state.current_page == "ホーム":
 
   with col1:
     st.subheader("📅 予定表")
-    st.write("直近のスケジュールや作業予定を確認・追加")
+    st.write("スケジュールや作業予定を確認・追加")
     if st.button("予定表を開く", key="h_cal", use_container_width=True):
       change_page("予定表")
       st.rerun()
@@ -295,7 +295,7 @@ elif st.session_state.current_page == "予定表":
       c_s1, c_s2 = st.columns(2)
       with c_s1:
         submit_sched = st.form_submit_button(
-            "📅 予定を登録して確認する", use_container_width=True
+            "📅 予定を登録", use_container_width=True
         )
       with c_s2:
         reset_sched = st.form_submit_button(
@@ -331,9 +331,9 @@ elif st.session_state.current_page == "予定表":
   col_left, col_right = st.columns([1, 1])
 
   with col_left:
-    st.subheader("🔍 日別スケジュールの確認")
+    st.subheader("🔍 スケジュールの確認")
     selected_date = st.date_input(
-        "確認したい日付を選択してください", key="selected_schedule_date"
+        "確認したい日付を選択してみ", key="selected_schedule_date"
     )
 
     day_schedules = [
@@ -356,7 +356,7 @@ elif st.session_state.current_page == "予定表":
       st.write("✅ この日の予定はありません。")
 
   with col_right:
-    st.subheader("🗓️ 月間スケジュール概要")
+    st.subheader("🗓️ 月間スケジュール")
     show_year = selected_date.year
     show_month = selected_date.month
     st.caption(f"{show_year}年 {show_month}月（🔴印＝予定ありの日）")
@@ -389,9 +389,9 @@ elif st.session_state.current_page == "予定表":
 # 3. 業務内容共有のページ
 # ==========================================
 elif st.session_state.current_page == "業務内容共有":
-  st.title("📝 業務内容共有（現場タイムライン）")
+  st.title("📝 業務内容共有（タイムライン）")
   st.write(
-      "日々の作業内容や現場写真を投稿できます。投稿の編集・削除（確認付き）やキーワード検索が可能です。"
+      "日々の作業内容や現場写真を投稿。投稿の編集・削除やキーワード検索が可能やで。"
   )
 
   if "form_id" not in st.session_state:
@@ -401,18 +401,18 @@ elif st.session_state.current_page == "業務内容共有":
   if "deleting_report_id" not in st.session_state:
     st.session_state["deleting_report_id"] = None
 
-  with st.expander("✍️ 【新しい業務報告を投稿する】", expanded=True):
+  with st.expander("✍️ 【新しい業務報告をポスト】", expanded=True):
     with st.form(
         key=f"new_report_form_{st.session_state['form_id']}",
         clear_on_submit=True,
     ):
-      st.subheader("✍️ 新しい業務報告を投稿する")
+      st.subheader("✍️ 新しい業務報告をポスト")
       c_a, c_b = st.columns(2)
       with c_a:
         reporter_name = st.text_input("投稿者名", placeholder="名前")
       with c_b:
         report_cat = st.selectbox(
-            "作業種別", ["現場作業", "定期点検", "打ち合わせ", "緊急対応", "その他"]
+            "作業種別", ["現場作業", "定期点検", "打ち合わせ", "緊急対応", "その他（希望の選択項目があれば変えます。）"]
         )
 
       report_body = st.text_area(
@@ -430,7 +430,7 @@ elif st.session_state.current_page == "業務内容共有":
         )
       with col_btn2:
         btn_reset = st.form_submit_button(
-            "🔄 入力内容をリセット（クリア）", use_container_width=True
+            "🔄 入力内容をリセット", use_container_width=True
         )
 
       if btn_post:
@@ -450,7 +450,7 @@ elif st.session_state.current_page == "業務内容共有":
               "image": img_bytes,
           }
           st.session_state.reports.insert(0, new_rep)
-          st.success("業務報告を投稿しました！")
+          st.success("業務報告を投稿したよ！")
           st.session_state["form_id"] += 1
           st.rerun()
         else:
@@ -464,8 +464,8 @@ elif st.session_state.current_page == "業務内容共有":
 
   st.subheader("🕒 業務共有タイムライン")
   search_keyword = st.text_input(
-      "🔍 タイムラインを検索（作業者名、作業種別、報告内容のキーワード）",
-      placeholder="例：尾崎、現場作業、配管 など...",
+      "🔍 検索できるでぇ～（作業者名、作業種別、報告内容のキーワード）",
+      placeholder="例：尾崎、現場作業、配管、パジェロ など...",
   )
 
   filtered_reports = st.session_state.reports
@@ -539,7 +539,7 @@ elif st.session_state.current_page == "業務内容共有":
 
         elif st.session_state["deleting_report_id"] == rep["id"]:
           st.warning(
-              f"⚠️ 投稿 ID:{rep['id']} （{rep['staff']}スタッフの「{rep['category']}」）を本当に削除してもよろしいですか？この操作は元に戻せません。"
+              f"⚠️ 投稿 ID:{rep['id']} （{rep['staff']}スタッフの「{rep['category']}」）をほんまに消してええん？？この操作は元に、戻らんで！"
           )
           d_col1, d_col2, _ = st.columns([1, 1, 3])
           with d_col1:
@@ -584,7 +584,7 @@ elif st.session_state.current_page == "業務内容共有":
 
         st.divider()
   else:
-    st.info("条件に一致する業務報告は見つかりませんでした。")
+    st.info("その条件じゃ，見つからんわ")
 
 
 # ==========================================
@@ -593,7 +593,7 @@ elif st.session_state.current_page == "業務内容共有":
 elif st.session_state.current_page == "請求書作成":
   st.title("📄 本格 請求書作成システム")
   st.write(
-      "ご提示いただいたフォーマット（25行固定）に準拠した請求書を発行できます。"
+      "このフォーマットで請求書作成できるようにしたけど、内容は確認して（修正可能）"
   )
 
   try:
@@ -622,40 +622,26 @@ elif st.session_state.current_page == "請求書作成":
       )
       issuer_tel = st.text_input("TEL・FAX", "072-956-5292")
 
-  st.subheader("明細行の入力（固定25行）")
+  st.subheader("明細行の入力")
 
   initial_rows = [
       {
           "項目": (
-              "大東建託(株)東大阪支店 村尾敏樹様 共同住宅(12戸)"
+              "テスト"
           ),
           "オーダー番号": "B682708",
           "金額": 246000,
       },
       {
           "項目": (
-              "大東建託(株)東大阪支店 大東建託AS(株)巽西 共同住宅(9戸)"
-          ),
-          "オーダー番号": "B683380",
-          "金額": 166500,
-      },
-      {
-          "項目": (
-              "大東建託(株)東大阪支店 大東建託AS(株)南恩加島 共同住宅(12戸)"
-          ),
-          "オーダー番号": "B683683",
-          "金額": 246000,
-      },
-      {
-          "項目": (
-              "大東建託(株)東大阪支店 吉川泰規様 集合住宅(4戸)"
+              "テスト２"
           ),
           "オーダー番号": "B683688",
           "金額": 82000,
       },
   ]
   while len(initial_rows) < 25:
-    initial_rows.append({"項目": "", "オーダー番号": "", "金額": 0})
+    initial_rows.append({"項目": "", "オーダー番号": "", "金額（税抜き）": 0})
 
   initial_data = pd.DataFrame(initial_rows)
   edited_df = st.data_editor(
@@ -827,24 +813,9 @@ elif st.session_state.current_page == "請求書作成":
 
   st.divider()
 
-  # --- 🎛️ PDFプレビューの表示ON/OFF切り替え ---
-  col_p1, col_p2 = st.columns([2, 1])
-  with col_p1:
-    st.subheader("📄 請求書プレビュー")
-  with col_p2:
-    show_preview = st.toggle("プレビューを表示する", value=False)
-
-  if show_preview:
-    base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode("utf-8")
-    pdf_display = (
-        f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%"'
-        ' height="600px" type="application/pdf"></iframe>'
-    )
-    st.markdown(pdf_display, unsafe_allow_html=True)
-  else:
-    st.info(
-        "💡 プレビューは非表示になっています。「プレビューを表示する」をONにすると画面上で確認できます。"
-    )
+ # --- 📄 請求書ダウンロード部分 ---
+  st.subheader("📄 請求書発行")
+  st.info("💡 下のボタンから、作成された請求書PDFをダウンロードしてご確認ください。")
 
   st.download_button(
       label="📥 請求書PDFをダウンロード",
