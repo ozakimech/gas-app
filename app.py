@@ -1,10 +1,27 @@
+import base64
+import calendar
+from datetime import date, datetime
+import io
+import pandas as pd
 import streamlit as st
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+
+# --- 1. ページの基本設定（最初に実行） ---
+st.set_page_config(
+    page_title="尾崎ガス配管 社内ポータル", page_icon="📄", layout="wide"
+)
+
+# --- 2. 日本語フォントの登録（セットでここに書くのが確実） ---
+pdfmetrics.registerFont(TTFont('IPAexGothic', 'ipaexg.ttf'))
+
 
 # ---- パスワード認証機能 ----
 def check_password():
     """正しいパスワードが入力されたら True を返す"""
     def password_entered():
-        # 設定したいパスワード（例: "ozaki2026"）
         if st.session_state["password_input"] == "ozagas":
             st.session_state["password_correct"] = True
             del st.session_state["password_input"]  # パスワードを保持しない
@@ -29,9 +46,10 @@ def check_password():
         
     return False
 
-# パスワードチェックを通らない場合は、ここで処理を停止（以降の画面を表示しない）
+# パスワードチェックを通らない場合は、ここで処理を停止
 if not check_password():
     st.stop()
+
 
 # ==========================================
 # これより下に、元々のメインのアプリコードを配置
