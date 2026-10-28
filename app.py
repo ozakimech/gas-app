@@ -596,11 +596,8 @@ elif st.session_state.current_page == "請求書作成":
       "このフォーマットで請求書作成できるようにしたけど、内容は確認して（修正可能）"
   )
 
-  try:
-    pdfmetrics.registerFont(TTFont("Meiryo", "C:\\Windows\\Fonts\\meiryo.ttc"))
-    FONT_NAME = "Meiryo"
-  except:
-    FONT_NAME = "Helvetica"
+  # 最初に登録した 'IPAexGothic' をそのまま使う
+  FONT_NAME = "IPAexGothic"
 
   with st.expander("📌 宛名・発行者情報の編集", expanded=True):
     col1, col2 = st.columns(2)
@@ -641,7 +638,7 @@ elif st.session_state.current_page == "請求書作成":
       },
   ]
   while len(initial_rows) < 25:
-    initial_rows.append({"項目": "", "オーダー番号": "", "金額（税抜き）": 0})
+    initial_rows.append({"項目": "", "オーダー番号": "", "金額": 0})
 
   initial_data = pd.DataFrame(initial_rows)
   edited_df = st.data_editor(
@@ -813,9 +810,24 @@ elif st.session_state.current_page == "請求書作成":
 
   st.divider()
 
- # --- 📄 請求書ダウンロード部分 ---
-  st.subheader("📄 請求書発行")
-  st.info("💡 下のボタンから、作成された請求書PDFをダウンロードしてご確認ください。")
+# --- 🎛️ PDFプレビューの表示ON/OFF切り替え ---
+  col_p1, col_p2 = st.columns([2, 1])
+  with col_p1:
+    st.subheader("📄 請求書プレビュー")
+  with col_p2:
+    show_preview = st.toggle("プレビューを表示する", value=False)
+
+  if show_preview:
+    base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode("utf-8")
+    pdf_display = (
+        f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%"'
+        ' height="600px" type="application/pdf"></iframe>'
+    )
+    st.markdown(pdf_display, unsafe_allow_html=True)
+  else:
+    st.info(
+        "💡 プレビューは非表示になっています。「プレビューを表示する」をONにすると画面上で確認できます。"
+    )
 
   st.download_button(
       label="📥 請求書PDFをダウンロード",
