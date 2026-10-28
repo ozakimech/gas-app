@@ -810,24 +810,9 @@ elif st.session_state.current_page == "請求書作成":
 
   st.divider()
 
-# --- 🎛️ PDFプレビューの表示ON/OFF切り替え ---
-  col_p1, col_p2 = st.columns([2, 1])
-  with col_p1:
-    st.subheader("📄 請求書プレビュー")
-  with col_p2:
-    show_preview = st.toggle("プレビューを表示する", value=False)
-
-  if show_preview:
-    base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode("utf-8")
-    pdf_display = (
-        f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%"'
-        ' height="600px" type="application/pdf"></iframe>'
-    )
-    st.markdown(pdf_display, unsafe_allow_html=True)
-  else:
-    st.info(
-        "💡 プレビューは非表示になっています。「プレビューを表示する」をONにすると画面上で確認できます。"
-    )
+ # --- 📄 請求書ダウンロード部分 ---
+  st.subheader("📄 請求書発行")
+  st.info("💡 下のボタンから、作成された請求書PDFをダウンロードしてご確認ください。")
 
   st.download_button(
       label="📥 請求書PDFをダウンロード",
