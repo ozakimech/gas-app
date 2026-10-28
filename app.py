@@ -1,3 +1,42 @@
+import streamlit as st
+
+# ---- パスワード認証機能 ----
+def check_password():
+    """正しいパスワードが入力されたら True を返す"""
+    def password_entered():
+        # 設定したいパスワード（例: "ozaki2026"）
+        if st.session_state["password_input"] == "ozagas":
+            st.session_state["password_correct"] = True
+            del st.session_state["password_input"]  # パスワードを保持しない
+        else:
+            st.session_state["password_correct"] = False
+
+    # すでに認証済みの場合は True
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # ログイン画面の表示
+    st.title("🔒 ログイン")
+    st.text_input(
+        "パスワードを入力してください", 
+        type="password", 
+        on_change=password_entered, 
+        key="password_input"
+    )
+    
+    if "password_correct" in st.session_state and not st.session_state["password_correct"]:
+        st.error("パスワードが違います。")
+        
+    return False
+
+# パスワードチェックを通らない場合は、ここで処理を停止（以降の画面を表示しない）
+if not check_password():
+    st.stop()
+
+# ==========================================
+# これより下に、元々のメインのアプリコードを配置
+# ==========================================
+
 import base64
 import calendar
 from datetime import date, datetime
