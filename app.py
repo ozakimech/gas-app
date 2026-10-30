@@ -15,47 +15,21 @@ st.set_page_config(
     page_title="尾崎ガス配管 社内ポータル", page_icon="🔧", layout="wide"
 )
 
-# 1. フォルダ内にある icon.jpg を自動で読み込んでBase64（データ形式）に変換する
-try:
-  with open("icon.jpg", "rb") as f:
-    encoded_img = base64.b64encode(f.read()).decode("utf-8")
-  icon_data_url = f"data:image/jpeg;base64,{encoded_img}"
-except FileNotFoundError:
-  icon_data_url = ""  # 万が一ファイルが見つからない場合の対策
+# --- 📱 PWA（アプリ化）用の設定（※必ず PNG画像を使うこと！） ---
+icon_url = (
+    "https://raw.githubusercontent.com/ozakimech/gas-app/main/icon.png"
+)
 
-# 2. マニフェストにも直接埋め込む
-manifest_json = f"""
-{{
-  "name": "尾崎ガス配管 社内ポータル",
-  "short_name": "尾崎ポータル",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e293b",
-  "icons": [
-    {{
-      "src": "{icon_data_url}",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    }}
-  ]
-}}
-"""
-
-manifest_base64 = base64.b64encode(manifest_json.encode("utf-8")).decode("utf-8")
-
-# 3. ブラウザに直接流し込む（Apple用アイコンにもデータを直接指定）
 st.markdown(
     f"""
-    <link rel="manifest" href="data:application/manifest+json;base64,{manifest_base64}">
-    <link rel="apple-touch-icon" href="{icon_data_url}">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIuWPt+WPs+ODleOCueODrCDnjovnuqDlho3ppKgxLCJzaG9ydF9uYW1lIjogIuaWv+WPs+ODleOCueODrCIsInN0YXJ0X3VybCI6ICIvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmZmZmYiLCAidGhlbWVfY29sb3IiOiAiIzFlMjkzYiIsICJpY29ucyI6IFt7InNyYyI6ICIvaWNvbi5wbmciLCAic2l6ZXMiOiAiMTkyPDE5MiIsICJ0eXBlIjogImltYWdlL3BuZyJ9XX0=">
+    <link rel="apple-touch-icon" href="{icon_url}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="尾崎ポータル">
     """,
     unsafe_allow_html=True,
 )
-
 
 # --- 1. ページの基本設定（最初に実行） ---
 st.set_page_config(
