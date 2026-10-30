@@ -8,19 +8,44 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-
 import streamlit as st
 
-# ページの設定
 st.set_page_config(
-    page_title="尾崎ガス配管 ", page_icon="🔧", layout="wide"
+    page_title="尾崎ガス配管 社内ポータル", page_icon="🔧", layout="wide"
 )
 
-# --- 📱 PWA（アプリ化）用の設定をブラウザに読み込ませる ---
+# --- 📱 PWA（アプリ化）用の確実な設定 ---
+# 実際のGitHub上の画像（icon.jpg）のRaw URLを指定
+icon_url = (
+    "https://raw.githubusercontent.com/ozakimech/gas-app/main/icon.jpg"
+)
+
+# manifestのJSONデータをコード内に直接埋め込む
+manifest_json = f"""
+{{
+  "name": "尾崎ガス配管 社内ポータル",
+  "short_name": "尾崎ポータル",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "icons": [
+    {{
+      "src": "{icon_url}",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    }}
+  ]
+}}
+"""
+
+manifest_base64 = base64.b64encode(manifest_json.encode("utf-8")).decode("utf-8")
+
+# ブラウザに直接流し込むタグ
 st.markdown(
-    """
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png">
+    f"""
+    <link rel="manifest" href="data:application/manifest+json;base64,{manifest_base64}">
+    <link rel="apple-touch-icon" href="{icon_url}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="尾崎ポータル">
