@@ -16,7 +16,7 @@ st.set_page_config(
 
 # --- 2. 日本語フォントの登録（セットでここに書くのが確実） ---
 pdfmetrics.registerFont(TTFont('IPAexGothic', 'ipaexg.ttf'))
-
+pdfmetrics.registerFont(TTFont('IPAexMincho', 'ipaexm.ttf'))
 
 # ---- パスワード認証機能 ----
 def check_password():
@@ -597,7 +597,9 @@ elif st.session_state.current_page == "請求書作成":
   )
 
   # 最初に登録した 'IPAexGothic' をそのまま使う
-  FONT_NAME = "IPAexGothic"
+  FONT_NAME_G = "IPAexGothic"
+  FONT_NAME_M = "IPAexMincho"
+
 
   with st.expander("📌 宛名・発行者情報の編集", expanded=True):
     col1, col2 = st.columns(2)
@@ -684,14 +686,23 @@ elif st.session_state.current_page == "請求書作成":
     width, height = A4
     c = canvas.Canvas(buffer, pagesize=A4)
 
+    def draw_bold_string(x, y, text, offset=0.3):
+        c.drawString(x, y, text)
+        c.drawString(x + offset, y, text)
+
+    def draw_bold_right_string(x, y, text, offset=0.3):
+        c.drawRightString(x, y, text)
+        c.drawRightString(x + offset, y, text)
+
+
     c.setFillColorRGB(0.15, 0.35, 0.65)
     c.rect(210, height - 45, 160, 25, fill=1, stroke=0)
     c.setFillColorRGB(1, 1, 1)
-    c.setFont(FONT_NAME, 14)
-    c.drawString(265, height - 37, "請 求 書")
+    c.setFont(FONT_NAME_M, 14)
+    draw_bold_string(265, height - 37, "請 求 書")
 
     c.setFillColorRGB(0, 0, 0)
-    c.setFont(FONT_NAME, 9)
+    c.setFont(FONT_NAME_G, 9)
     c.drawString(500, height - 25, "No.")
     c.drawString(540, height - 25, str(invoice_no))
     c.drawString(480, height - 45, f"{issue_date}")
@@ -700,38 +711,44 @@ elif st.session_state.current_page == "請求書作成":
     c.setStrokeColorRGB(0, 0, 0)
     c.line(500, height - 30, 570, height - 30)
 
-    c.setFont(FONT_NAME, 16)
-    c.drawString(40, height - 85, f"{client_name}")
+    c.setFont(FONT_NAME_M, 18)
+    draw_bold_string(40, height - 85, f"{client_name}")
 
+  
     c.setFillColorRGB(0.15, 0.35, 0.65)
-    c.setFont(FONT_NAME, 8)
+    c.setFont(FONT_NAME_G, 8)
     c.drawString(45, height - 115, "下記の通りご請求申し上げますので、ご照会の上")
     c.drawString(45, height - 125, "お支払いくださいますようお願い申し上げます。")
     c.drawString(45, height - 140, "ご請求金額：")
 
     c.setFillColorRGB(0, 0, 0)
-    c.setFont(FONT_NAME, 11)
-    c.drawString(100, height - 140, f"¥{total_amount_inc:,}")
+    c.setFont(FONT_NAME_M, 11)
+    draw_bold_string(100, height - 140, f"¥{total_amount_inc:,}")
 
     c.setLineWidth(1.5)
     c.setStrokeColorRGB(0.15, 0.35, 0.65)
     c.line(40, height - 145, 200, height - 145)
 
-    c.setFont(FONT_NAME, 9)
+    c.setFont(FONT_NAME_G, 9)
     c.drawString(420, height - 75, f"{issuer_postal}")
+    c.setFont(FONT_NAME_M, 9)
     c.drawString(410, height - 87, f"{issuer_address}")
-    c.setFont(FONT_NAME, 12)
-    c.drawString(410, height - 102, f"{issuer_name}")
-    c.setFont(FONT_NAME, 9)
+    c.setFont(FONT_NAME_M, 12)
+    draw_bold_string(410, height - 102, f"{issuer_name}")
+    c.setFont(FONT_NAME_G, 9)
     c.drawString(410, height - 115, f"TEL･FAX {issuer_tel}")
-    c.drawString(410, height - 145, f"登録番号 {registration_no}")
+    c.setFont(FONT_NAME_M, 9)
+    draw_bold_string(410, height - 145, "登録番号")
+    c.setFont(FONT_NAME_G, 9)
+    c.drawString(450, height -145,f"{registration_no}" )
 
     y = height - 190
     c.setFillColorRGB(0.15, 0.35, 0.65)
     c.rect(40, y, width - 80, 20, fill=1, stroke=1)
     c.setFillColorRGB(1, 1, 1)
-    c.setFont(FONT_NAME, 9)
+    c.setFont(FONT_NAME_G, 9)
     c.drawString(50, y + 8, "No.")
+    c.setFont(FONT_NAME_M, 9)
     c.drawString(210, y + 8, "項目")
     c.drawString(390, y + 8, "オーダー番号")
     c.drawString(500, y + 8, "金額")
@@ -746,7 +763,7 @@ elif st.session_state.current_page == "請求書作成":
       c.line(380, y, 380, y + 18)
       c.line(460, y, 460, y + 18)
 
-      c.setFont(FONT_NAME, 9)
+      c.setFont(FONT_NAME_G, 9)
       c.drawCentredString(57, y + 5, str(i + 1))
 
       if i < len(df):
@@ -778,14 +795,14 @@ elif st.session_state.current_page == "請求書作成":
     c.line(380, y - 36, width - 40, y - 36)
     c.line(460, y - 54, 460, y)
 
-    c.setFont(FONT_NAME, 9)
+    c.setFont(FONT_NAME_M, 9)
     c.drawString(410, y - 13, "小 計")
     c.drawRightString(width - 48, y - 13, f"{int(subtotal_all):,}")
     c.drawString(395, y - 31, "消費税10%")
     c.drawRightString(width - 48, y - 31, f"{int(tax_all):,}")
-    c.setFont(FONT_NAME, 10)
+    c.setFont(FONT_NAME_M, 10)
     c.drawString(410, y - 48, "合 計")
-    c.drawRightString(width - 48, y - 48, f"{int(total_amount_inc):,}")
+    c.drawString(width - 48, y - 48, f"{int(total_amount_inc):,}")
 
     c.showPage()
     c.save()
