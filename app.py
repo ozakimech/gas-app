@@ -8,19 +8,22 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
+
 import streamlit as st
 
 st.set_page_config(
     page_title="尾崎ガス配管 社内ポータル", page_icon="🔧", layout="wide"
 )
 
-# --- 📱 PWA（アプリ化）用の確実な設定 ---
-# 実際のGitHub上の画像（icon.jpg）のRaw URLを指定
-icon_url = (
-    "https://raw.githubusercontent.com/ozakimech/gas-app/main/icon.jpg"
-)
+# 1. フォルダ内にある icon.jpg を自動で読み込んでBase64（データ形式）に変換する
+try:
+  with open("icon.jpg", "rb") as f:
+    encoded_img = base64.b64encode(f.read()).decode("utf-8")
+  icon_data_url = f"data:image/jpeg;base64,{encoded_img}"
+except FileNotFoundError:
+  icon_data_url = ""  # 万が一ファイルが見つからない場合の対策
 
-# manifestのJSONデータをコード内に直接埋め込む
+# 2. マニフェストにも直接埋め込む
 manifest_json = f"""
 {{
   "name": "尾崎ガス配管 社内ポータル",
@@ -31,7 +34,7 @@ manifest_json = f"""
   "theme_color": "#1e293b",
   "icons": [
     {{
-      "src": "{icon_url}",
+      "src": "{icon_data_url}",
       "sizes": "192x192",
       "type": "image/jpeg"
     }}
@@ -41,11 +44,11 @@ manifest_json = f"""
 
 manifest_base64 = base64.b64encode(manifest_json.encode("utf-8")).decode("utf-8")
 
-# ブラウザに直接流し込むタグ
+# 3. ブラウザに直接流し込む（Apple用アイコンにもデータを直接指定）
 st.markdown(
     f"""
     <link rel="manifest" href="data:application/manifest+json;base64,{manifest_base64}">
-    <link rel="apple-touch-icon" href="{icon_url}">
+    <link rel="apple-touch-icon" href="{icon_data_url}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="尾崎ポータル">
