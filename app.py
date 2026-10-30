@@ -9,6 +9,25 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
+import streamlit as st
+
+# ページの設定
+st.set_page_config(
+    page_title="尾崎ガス配管 ", page_icon="🔧", layout="wide"
+)
+
+# --- 📱 PWA（アプリ化）用の設定をブラウザに読み込ませる ---
+st.markdown(
+    """
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="尾崎ポータル">
+    """,
+    unsafe_allow_html=True,
+)
+
+
 # --- 1. ページの基本設定（最初に実行） ---
 st.set_page_config(
     page_title="尾崎ガス配管 社内ポータル", page_icon="📄", layout="wide"
@@ -689,6 +708,7 @@ elif st.session_state.current_page == "請求書作成":
     def draw_bold_string(x, y, text, offset=0.3):
         c.drawString(x, y, text)
         c.drawString(x + offset, y, text)
+        c.drawString(x + offset, y + offset, text )
 
     def draw_bold_right_string(x, y, text, offset=0.3):
         c.drawRightString(x, y, text)
@@ -696,74 +716,74 @@ elif st.session_state.current_page == "請求書作成":
 
 
     c.setFillColorRGB(0.15, 0.35, 0.65)
-    c.rect(210, height - 45, 160, 25, fill=1, stroke=0)
+    c.rect(220, height - 60, 160, 25, fill=1, stroke=0)
     c.setFillColorRGB(1, 1, 1)
-    c.setFont(FONT_NAME_M, 14)
-    draw_bold_string(265, height - 37, "請 求 書")
+    c.setFont(FONT_NAME_M, 18)
+    draw_bold_string(270, height - 55, "請 求 書")
 
     c.setFillColorRGB(0, 0, 0)
     c.setFont(FONT_NAME_G, 9)
-    c.drawString(500, height - 25, "No.")
-    c.drawString(540, height - 25, str(invoice_no))
-    c.drawString(480, height - 45, f"{issue_date}")
+    c.drawString(470, height - 35, "No.")
+    c.drawString(510, height - 35, str(invoice_no))
+    c.drawString(450, height - 55, f"{issue_date}")
 
     c.setLineWidth(1.0)
     c.setStrokeColorRGB(0, 0, 0)
-    c.line(500, height - 30, 570, height - 30)
+    c.line(470, height - 36, 555, height - 36)
 
-    c.setFont(FONT_NAME_M, 18)
+    c.setFont(FONT_NAME_M, 22)
     draw_bold_string(40, height - 85, f"{client_name}")
 
   
     c.setFillColorRGB(0.15, 0.35, 0.65)
-    c.setFont(FONT_NAME_G, 8)
+    c.setFont(FONT_NAME_G, 12)
     c.drawString(45, height - 115, "下記の通りご請求申し上げますので、ご照会の上")
-    c.drawString(45, height - 125, "お支払いくださいますようお願い申し上げます。")
-    c.drawString(45, height - 140, "ご請求金額：")
+    c.drawString(45, height - 130, "お支払いくださいますようお願い申し上げます。")
+    c.drawString(45, height - 150, "ご請求金額：")
 
     c.setFillColorRGB(0, 0, 0)
-    c.setFont(FONT_NAME_M, 11)
-    draw_bold_string(100, height - 140, f"¥{total_amount_inc:,}")
+    c.setFont(FONT_NAME_M, 14)
+    draw_bold_string(125, height - 150, f"¥{total_amount_inc:,}")
 
     c.setLineWidth(1.5)
     c.setStrokeColorRGB(0.15, 0.35, 0.65)
-    c.line(40, height - 145, 200, height - 145)
+    c.line(45, height - 155, 200, height - 155)
 
-    c.setFont(FONT_NAME_G, 9)
+    c.setFont(FONT_NAME_G, 10)
     c.drawString(420, height - 75, f"{issuer_postal}")
-    c.setFont(FONT_NAME_M, 9)
+    c.setFont(FONT_NAME_M, 10)
     c.drawString(410, height - 87, f"{issuer_address}")
-    c.setFont(FONT_NAME_M, 12)
-    draw_bold_string(410, height - 102, f"{issuer_name}")
-    c.setFont(FONT_NAME_G, 9)
-    c.drawString(410, height - 115, f"TEL･FAX {issuer_tel}")
-    c.setFont(FONT_NAME_M, 9)
+    c.setFont(FONT_NAME_M, 14)
+    draw_bold_string(410, height - 105, f"{issuer_name}")
+    c.setFont(FONT_NAME_G, 10)
+    c.drawString(410, height - 118, f"TEL･FAX {issuer_tel}")
+    c.setFont(FONT_NAME_M, 10)
     draw_bold_string(410, height - 145, "登録番号")
-    c.setFont(FONT_NAME_G, 9)
-    c.drawString(450, height -145,f"{registration_no}" )
+    c.setFont(FONT_NAME_G, 10)
+    c.drawString(455, height -145,f"{registration_no}" )
 
     y = height - 190
     c.setFillColorRGB(0.15, 0.35, 0.65)
     c.rect(40, y, width - 80, 20, fill=1, stroke=1)
     c.setFillColorRGB(1, 1, 1)
-    c.setFont(FONT_NAME_G, 9)
-    c.drawString(50, y + 8, "No.")
-    c.setFont(FONT_NAME_M, 9)
-    c.drawString(210, y + 8, "項目")
-    c.drawString(390, y + 8, "オーダー番号")
-    c.drawString(500, y + 8, "金額")
+    c.setFont(FONT_NAME_G, 10)
+    draw_bold_right_string(65, y + 8, "No.")
+    c.setFont(FONT_NAME_M, 10)
+    draw_bold_right_string(235, y + 8, "項目")
+    draw_bold_right_string(445, y + 8, "オーダー番号")
+    draw_bold_right_string(515, y + 8, "金額")
 
     c.setFillColorRGB(0, 0, 0)
-    y -= 18
+    y -= 20
     MAX_ROWS = 25
 
     for i in range(MAX_ROWS):
-      c.rect(40, y, width - 80, 18, fill=0, stroke=1)
-      c.line(75, y, 75, y + 18)
-      c.line(380, y, 380, y + 18)
-      c.line(460, y, 460, y + 18)
+      c.rect(40, y, width - 80, 20, fill=0, stroke=1)
+      c.line(75, y, 75, y + 20)
+      c.line(380, y, 380, y + 20)
+      c.line(460, y, 460, y + 20)
 
-      c.setFont(FONT_NAME_G, 9)
+      c.setFont(FONT_NAME_G, 13)
       c.drawCentredString(57, y + 5, str(i + 1))
 
       if i < len(df):
@@ -783,26 +803,26 @@ elif st.session_state.current_page == "請求書作成":
             amt_str = ""
 
           c.drawString(82, y + 5, item_val)
-          c.drawString(410, y + 5, order_val)
+          c.drawString(396, y + 5, order_val)
           if amt_str:
             c.drawRightString(width - 48, y + 5, amt_str)
 
-      y -= 18
+      y -= 20
 
-    c.rect(40, y - 54, 340, 54, fill=0, stroke=1)
-    c.rect(380, y - 54, width - 420, 54, fill=0, stroke=1)
-    c.line(380, y - 18, width - 40, y - 18)
-    c.line(380, y - 36, width - 40, y - 36)
-    c.line(460, y - 54, 460, y)
+    c.rect(40, y - 60, 340, 60, fill=0, stroke=1)
+    c.rect(380, y - 60, width - 420, 60, fill=0, stroke=1)
+    c.line(380, y - 20, width - 40, y - 20)
+    c.line(380, y - 40, width - 40, y - 40)
+    c.line(460, y - 60, 460, y)
 
-    c.setFont(FONT_NAME_M, 9)
+    c.setFont(FONT_NAME_M, 12)
     c.drawString(410, y - 13, "小 計")
     c.drawRightString(width - 48, y - 13, f"{int(subtotal_all):,}")
-    c.drawString(395, y - 31, "消費税10%")
-    c.drawRightString(width - 48, y - 31, f"{int(tax_all):,}")
-    c.setFont(FONT_NAME_M, 10)
-    c.drawString(410, y - 48, "合 計")
-    c.drawString(width - 48, y - 48, f"{int(total_amount_inc):,}")
+    c.drawString(388, y - 35, "消費税(10%)")
+    c.drawRightString(width - 48, y - 35, f"{int(tax_all):,}")
+    c.setFont(FONT_NAME_M, 12)
+    c.drawString(410, y - 55, "合 計")
+    draw_bold_string(width - 95, y - 55, f"{int(total_amount_inc):,}")
 
     c.showPage()
     c.save()
@@ -827,9 +847,26 @@ elif st.session_state.current_page == "請求書作成":
 
   st.divider()
 
- # --- 📄 請求書ダウンロード部分 ---
-  st.subheader("📄 請求書発行")
-  st.info("💡 下のボタンから、作成された請求書PDFをダウンロードしてご確認ください。")
+  st.divider()
+
+  # --- 🎛️ PDFプレビューの表示ON/OFF切り替え ---
+  col_p1, col_p2 = st.columns([2, 1])
+  with col_p1:
+    st.subheader("📄 請求書プレビュー")
+  with col_p2:
+    show_preview = st.toggle("プレビューを表示する", value=False)
+
+  if show_preview:
+    base64_pdf = base64.b64encode(pdf_buffer.getvalue()).decode("utf-8")
+    pdf_display = (
+        f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%"'
+        ' height="600px" type="application/pdf"></iframe>'
+    )
+    st.markdown(pdf_display, unsafe_allow_html=True)
+  else:
+    st.info(
+        "💡 プレビューは非表示になっています。「プレビューを表示する」をONにすると画面上で確認できます。"
+    )
 
   st.download_button(
       label="📥 請求書PDFをダウンロード",
@@ -838,3 +875,14 @@ elif st.session_state.current_page == "請求書作成":
       mime="application/pdf",
       use_container_width=True,
   )
+
+ # --- 📄 請求書ダウンロード部分 ---
+  #st.subheader("📄 請求書発行")
+  #st.info("💡 下のボタンから、作成された請求書PDFをダウンロードしてご確認ください。")
+
+  #st.download_button(
+   #   label="📥 請求書PDFをダウンロード",
+    #  data=pdf_buffer,
+     ##mime="application/pdf",
+      #use_container_width=True,
+  #)
