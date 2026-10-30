@@ -1,5 +1,4 @@
 import base64
-import calendar
 from datetime import date, datetime
 import io
 import json
@@ -76,41 +75,42 @@ pdfmetrics.registerFont(TTFont("IPAexMincho", str(BASE_DIR / "ipaexm.ttf")))
 
 
 # ---- パスワード認証機能 ----
-def check_password():
-  def password_entered():
-    if st.session_state["password_input"] == "ozagas":
-      st.session_state["password_correct"] = True
-      del st.session_state["password_input"]
-    else:
-      st.session_state["password_correct"] = False
+# def check_password():
+#   def password_entered():
+#     if st.session_state["password_input"] == "ozagas":
+#       st.session_state["password_correct"] = True
+#       del st.session_state["password_input"]
+#     else:
+#       st.session_state["password_correct"] = False
 
-  if st.session_state.get("password_correct", False):
-    return True
+#   if st.session_state.get("password_correct", False):
+#     return True
 
-  st.title("🔒 ログイン")
-  st.text_input(
-      "パスワードを入力せなあかん",
-      type="password",
-      on_change=password_entered,
-      key="password_input",
-  )
+#   st.title("🔒 ログイン")
+#   st.text_input(
+#       "パスワードを入力せなあかん",
+#       type="password",
+#       on_change=password_entered,
+#       key="password_input",
+#   )
 
-  if (
-      "password_correct" in st.session_state
-      and not st.session_state["password_correct"]
-  ):
-    st.error("パスワード間違っとる")
+#   if (
+#       "password_correct" in st.session_state
+#       and not st.session_state["password_correct"]
+#   ):
+#     st.error("パスワード間違っとる")
 
-  return False
+#   return False
 
 
-if not check_password():
-  st.stop()
+# if not check_password():
+#   st.stop()
 
 
 # ---- 💾 データの永続保存（JSONファイル読み書き）機能 ----
-REPORTS_FILE = BASE_DIR / "reports.json"
+PROJECTS_FILE = BASE_DIR / "projects.json"
 FEEDBACKS_FILE = BASE_DIR / "feedbacks.json"
+INVOICE_HIST_FILE = BASE_DIR / "invoice_history.json"
 
 
 def load_data(file_path, default_data):
@@ -135,24 +135,27 @@ if "current_page" not in st.session_state:
 if "theme_mode" not in st.session_state:
   st.session_state.theme_mode = "ライト"
 
-if "invoice_history" not in st.session_state:
-  st.session_state.invoice_history = []
-
-# ファイルからデータを復元（無ければ初期値）
-if "reports" not in st.session_state:
-  default_reports = [
+# 現場データの読み込み
+if "projects" not in st.session_state:
+  default_projects = [
       {
           "id": 1,
+          "site_name": "〇〇マンション 配管更新",
+          "floor_count": 8,
           "timestamp": "2026-10-28 15:30",
-          "staff": "尾崎",
-          "category": "現場作業",
-          "text": (
-              "本日午前中の配管交換作業が無事完了しました。漏れテストもクリアしています。"
-          ),
-          "image": None,
+          "tasks": [
+              {
+                  "task_id": 1,
+                  "task_name": "あああああああああ",
+                  "task_memo": "資材置き場は2階通路。注意事項：水圧確認必須",
+                  "floors": {
+                      f"{i}階": False for i in range(1, 9)
+                  },
+              }
+          ],
       }
   ]
-  st.session_state.reports = load_data(REPORTS_FILE, default_reports)
+  st.session_state.projects = load_data(PROJECTS_FILE, default_projects)
 
 if "feedbacks" not in st.session_state:
   default_feedbacks = [
@@ -161,16 +164,38 @@ if "feedbacks" not in st.session_state:
           "timestamp": "2026-10-28 16:00",
           "name": "現場スタッフ",
           "category": "機能改善リクエスト",
-          "text": (
-              "スマホから写真アップロードするときの速度がもう少し速くなると嬉しいです！"
-          ),
+          "text": "チェックリストのすぐ下にメモが書けて使いやすくなりました！",
           "status": "確認中",
       }
   ]
   st.session_state.feedbacks = load_data(FEEDBACKS_FILE, default_feedbacks)
 
+if "invoice_history" not in st.session_state:
+  raw_hist = load_data(INVOICE_HIST_FILE, [])
+  restored_hist = []
+  for item in raw_hist:
+    pdf_b = b""
+    if item.get("pdf_base64"):
+      try:
+        pdf_b = base64.b64decode(item["pdf_base64"].encode("utf-8"))
+      except:
+        pass
+    elif isinstance(item.get("pdf_bytes"), bytes):
+      pdf_b = item["pdf_bytes"]
 
-# --- 🎨 CSSの動的適用（波括弧のエスケープも最適化） ---
+    restored_hist.append({
+        "id": item.get("id", 1),
+        "timestamp": item.get("timestamp", ""),
+        "invoice_no": item.get("invoice_no", ""),
+        "client_name": item.get("client_name", ""),
+        "issue_date": item.get("issue_date", ""),
+        "total_amount": item.get("total_amount", 0),
+        "pdf_bytes": pdf_b,
+    })
+  st.session_state.invoice_history = restored_hist
+
+
+# --- 🎨 CSSの動的適用 ---
 if "view_mode_select" not in st.session_state:
   st.session_state["view_mode_select"] = "自動（レスポンシブ）"
 
@@ -275,7 +300,7 @@ st.sidebar.title("📌 メニュー")
 st.sidebar.write("")
 if st.sidebar.button("🏠 ホーム（トップ）", use_container_width=True):
   change_page("ホーム")
-if st.sidebar.button("📝 業務内容共有", use_container_width=True):
+if st.sidebar.button("📝 業務内容共有（現場チェック）", use_container_width=True):
   change_page("業務内容共有")
 if st.sidebar.button("📄 請求書作成＆履歴", use_container_width=True):
   change_page("請求書作成")
@@ -301,7 +326,6 @@ selected_mode = st.sidebar.radio(
     label_visibility="collapsed",
 )
 
-# 👇 メニュー・サブメニューの一番下に問い合わせ窓口を配置
 st.sidebar.divider()
 if st.sidebar.button("💡 意見・問い合わせ窓口", use_container_width=True):
   change_page("意見ボックス")
@@ -314,7 +338,7 @@ st.sidebar.caption("© 2026 尾崎ガス配管 業務管理システム")
 # ==========================================
 if st.session_state.current_page == "ホーム":
   st.title("👨‍🔧🪏 業務管理場へようこそ")
-  st.write("毎日の業務管理、情報共有、および請求書発行ができるで。")
+  st.write("毎日の業務管理、現場チェックリスト、および請求書発行ができるで。")
 
   st.divider()
 
@@ -322,7 +346,7 @@ if st.session_state.current_page == "ホーム":
 
   with col1:
     st.subheader("📝 業務内容共有")
-    st.write("現場写真や日報の共有・確認")
+    st.write("現場別・作業別の進捗チェック")
     if st.button("業務共有を開く", key="h_work", use_container_width=True):
       change_page("業務内容共有")
       st.rerun()
@@ -336,104 +360,198 @@ if st.session_state.current_page == "ホーム":
 
 
 # ==========================================
-# 2. 業務内容共有のページ
+# 2. 業務内容共有（作業ごとの階数チェック＆配置型メモ）のページ
 # ==========================================
 elif st.session_state.current_page == "業務内容共有":
-  st.title("📝 業務内容共有（タイムライン）")
-  st.write(
-      "日々の作業内容や現場写真を投稿・共有できます。（投稿内容は永続保存されます）"
-  )
+  st.title("📝 現場・作業別 階数チェックリスト")
+  st.write("①現場と階数を作成 ➡ ②「＋」から作業を追加 ➡ ③チェックとメモを管理！")
 
-  if "form_id" not in st.session_state:
-    st.session_state["form_id"] = 0
+  if "proj_form_id" not in st.session_state:
+    st.session_state["proj_form_id"] = 0
 
-  with st.expander("✍️ 【新しい業務報告をポスト】", expanded=True):
+  # ① 新規現場・階数の作成
+  with st.expander("➕ 【新しい現場（フォルダ）の作成】", expanded=False):
     with st.form(
-        key=f"new_report_form_{st.session_state['form_id']}",
+        key=f"new_proj_form_{st.session_state['proj_form_id']}",
         clear_on_submit=True,
     ):
-      st.subheader("✍️ 新しい業務報告をポスト")
-      c_a, c_b = st.columns(2)
-      with c_a:
-        reporter_name = st.text_input("投稿者名", placeholder="名前")
-      with c_b:
-        report_cat = st.selectbox(
-            "作業種別", ["現場作業", "定期点検", "打ち合わせ", "緊急対応", "その他"]
-        )
-
-      report_body = st.text_area(
-          "報告内容・詳細", placeholder="作業の進捗状態、現場の状況などを入力..."
+      st.subheader("① 現場入力 ＋ 階数入力")
+      new_site_name = st.text_input(
+          "作業現場名（建物名など）", placeholder="例：〇〇マンション"
+      )
+      new_floor_count = st.number_input(
+          "建物の階数（何階建てか）",
+          min_value=1,
+          max_value=50,
+          value=3,
+          step=1,
       )
 
-      col_btn1, col_btn2 = st.columns([1, 1])
-      with col_btn1:
-        btn_post = st.form_submit_button(
-            "🚀 タイムラインに投稿する", use_container_width=True
+      col_p1, col_p2 = st.columns(2)
+      with col_p1:
+        submit_proj = st.form_submit_button(
+            "🏗️ 現場を作成する", use_container_width=True
         )
-      with col_btn2:
-        btn_reset = st.form_submit_button(
-            "🔄 入力内容をリセット", use_container_width=True
+      with col_p2:
+        reset_proj = st.form_submit_button(
+            "🔄 入力リセット", use_container_width=True
         )
 
-      if btn_post:
-        if report_body.strip() != "":
+      if submit_proj:
+        if new_site_name.strip() != "":
           now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
           new_id = (
-              max([r["id"] for r in st.session_state.reports], default=0) + 1
+              max([p["id"] for p in st.session_state.projects], default=0) + 1
           )
 
-          new_rep = {
+          new_project = {
               "id": new_id,
+              "site_name": new_site_name.strip(),
+              "floor_count": int(new_floor_count),
               "timestamp": now_str,
-              "staff": reporter_name if reporter_name.strip() else "尾崎",
-              "category": report_cat,
-              "text": report_body,
-              "image": None,
+              "tasks": [],
           }
-          st.session_state.reports.insert(0, new_rep)
+          st.session_state.projects.insert(0, new_project)
+          save_data(PROJECTS_FILE, st.session_state.projects)
 
-          # 💾 ファイルに保存！
-          save_data(REPORTS_FILE, st.session_state.reports)
-
-          st.success("業務報告を投稿したよ！（保存されました）")
-          st.session_state["form_id"] += 1
+          st.success(f"✅ 現場「{new_site_name}」（{new_floor_count}階建て）を作成しました！")
+          st.session_state["proj_form_id"] += 1
           st.rerun()
         else:
-          st.error("報告内容を入力してください。")
-
-      elif btn_reset:
-        st.session_state["form_id"] += 1
+          st.error("現場名を入力してください。")
+      elif reset_proj:
+        st.session_state["proj_form_id"] += 1
         st.rerun()
 
   st.divider()
 
-  st.subheader("🕒 業務共有タイムライン")
-  search_keyword = st.text_input(
-      "🔍 キーワード検索", placeholder="例：尾崎、現場作業、配管 など..."
-  )
+  st.subheader("📋 現場フォルダ一覧")
 
-  filtered_reports = st.session_state.reports
-  if search_keyword.strip() != "":
-    kw = search_keyword.strip().lower()
-    filtered_reports = [
-        r
-        for r in st.session_state.reports
-        if kw in r["staff"].lower()
-        or kw in r["category"].lower()
-        or kw in r["text"].lower()
-    ]
-
-  if filtered_reports:
-    for rep in filtered_reports:
+  if not st.session_state.projects:
+    st.info("登録されている現場はありません。上の「新しい現場（フォルダ）の作成」から追加してください。")
+  else:
+    for proj in st.session_state.projects:
       with st.container():
         st.markdown(
-            f"### 🏷️ 【{rep['category']}】 {rep['staff']} スタッフ"
+            f"### 🏢 【現場】 {proj['site_name']} （全 {proj['floor_count']} 階）"
         )
-        st.caption(f"🕒 投稿日時: {rep['timestamp']}")
-        st.write(rep["text"])
+        st.caption(f"🕒 作成日時: {proj['timestamp']}")
+
+        floors = [f"{i}階" for i in range(1, proj["floor_count"] + 1)]
+
+        # ② 作業を追加する「＋」ボタン（エクスパンダー）
+        with st.expander(
+            f"➕ 作業内容を追加する（{proj['site_name']}）", expanded=False
+        ):
+          task_form_key = f"task_form_{proj['id']}"
+          with st.form(key=task_form_key, clear_on_submit=True):
+            st.subheader("② 作業内容とメモの記入")
+            new_task_name = st.text_input(
+                "作業名", placeholder="例：配管保温材巻き、水圧検査 など"
+            )
+            new_task_memo = st.text_area(
+                "作業全体のメモ（初期メモ）", placeholder="この作業に関するメモ・特記事項を入力..."
+            )
+
+            add_task_btn = st.form_submit_button(
+                "➕ 作業を登録する", use_container_width=True
+            )
+
+            if add_task_btn:
+              if new_task_name.strip() != "":
+                initial_floors_checked = {f: False for f in floors}
+                new_task_id = (
+                    max([t["task_id"] for t in proj["tasks"]], default=0) + 1
+                    if proj["tasks"]
+                    else 1
+                )
+
+                new_task = {
+                    "task_id": new_task_id,
+                    "task_name": new_task_name.strip(),
+                    "task_memo": new_task_memo.strip(),
+                    "floors": initial_floors_checked,
+                }
+                proj["tasks"].append(new_task)
+                save_data(PROJECTS_FILE, st.session_state.projects)
+
+                st.success(f"✅ 作業「{new_task_name}」を追加しました！")
+                st.rerun()
+              else:
+                st.error("作業名を入力してください。")
+
+        # ③ 作業ごとに、チェックリスト ➡ ★メモ機能★ ➡ 区切り線 ➡ まるごと削除ボタン
+        if proj["tasks"]:
+          st.write("#### 🛠️ 登録された作業一覧（チェックリスト）")
+          for task in proj["tasks"]:
+            with st.container():
+              col_t1, col_t2 = st.columns([3, 1])
+              with col_t1:
+                st.markdown(f"### 📌 作業名: {task['task_name']}")
+              with col_t2:
+                if st.button("🗑️ 作業削除", key=f"del_task_{proj['id']}_{task['task_id']}"):
+                  proj["tasks"] = [
+                      t for t in proj["tasks"] if t["task_id"] != task["task_id"]
+                  ]
+                  save_data(PROJECTS_FILE, st.session_state.projects)
+                  st.success("作業を削除しました。")
+                  st.rerun()
+
+              # 互換性対策
+              if "floors" not in task:
+                old_floor_data = task.get("floor_data", {})
+                task["floors"] = {
+                    f: old_floor_data.get(f, {}).get("checked", False) for f in floors
+                }
+
+              # 1. 各階の完了チェック
+              st.write("##### 各階の完了チェック：")
+              chk_cols = st.columns(min(len(floors), 5))
+              for idx, floor in enumerate(floors):
+                col_target = chk_cols[idx % len(chk_cols)]
+                with col_target:
+                  current_chk = task["floors"].get(floor, False)
+                  new_chk = st.checkbox(
+                      f"{floor}",
+                      value=current_chk,
+                      key=f"chk_{proj['id']}_{task['task_id']}_{floor}",
+                  )
+                  if new_chk != current_chk:
+                    task["floors"][floor] = new_chk
+                    save_data(PROJECTS_FILE, st.session_state.projects)
+                    st.rerun()
+
+              st.write("")  # 余白
+
+              # 2. ★チェックリストと下部の区切り線の間に配置されたメモ機能★
+              current_memo = task.get("task_memo", "")
+              updated_memo = st.text_area(
+                  "📝 作業メモ（備考・特記事項）",
+                  value=current_memo,
+                  placeholder="この作業に関するメモや特記事項を入力・修正できます...",
+                  key=f"memo_input_{proj['id']}_{task['task_id']}",
+                  height=100,
+              )
+
+              # メモが変更されたら自動保存
+              if updated_memo != current_memo:
+                task["task_memo"] = updated_memo
+                save_data(PROJECTS_FILE, st.session_state.projects)
+
+              st.markdown("---")
+        else:
+          st.info("この現場にはまだ作業が登録されていません。「作業内容を追加する」から登録してください。")
+
+        # 3. 現場フォルダ全体の丸ごと削除ボタン
+        if st.button("🗑️ この現場を丸ごと削除", key=f"del_proj_{proj['id']}"):
+          st.session_state.projects = [
+              p for p in st.session_state.projects if p["id"] != proj["id"]
+          ]
+          save_data(PROJECTS_FILE, st.session_state.projects)
+          st.success("現場フォルダを削除しました。")
+          st.rerun()
+
         st.divider()
-  else:
-    st.info("該当する投稿が見つかりませんでした。")
 
 
 # ==========================================
@@ -451,20 +569,23 @@ elif st.session_state.current_page == "請求書作成":
     with st.expander("📌 宛名・発行者情報の編集", expanded=True):
       col1, col2 = st.columns(2)
       with col1:
-        client_name = st.text_input("宛名", "伊丹産業電設(株) 御中")
-        issue_date = st.text_input("発行日", "2026年 9月 30日")
+        client_name = st.text_input("宛名", placeholder="例：伊丹産業電設(株) 御中")
+        selected_d = st.date_input("発行日を選択", value=date.today())
+        issue_date = f"{selected_d.year}年 {selected_d.month}月 {selected_d.day}日"
+        st.caption(f"📌 設定される発行日: **{issue_date}**")
+
       with col2:
-        invoice_no = st.text_input("請求書番号 (No.)", "1")
-        registration_no = st.text_input("登録番号", "T1810824577403")
+        invoice_no = st.text_input("請求書番号 (No.)", placeholder="例：1")
+        registration_no = st.text_input("登録番号", value="T1810824577403")
 
       st.divider()
       col3, col4 = st.columns(2)
       with col3:
-        issuer_name = st.text_input("発行者（屋号・会社名）", "尾崎ガス配管")
-        issuer_postal = st.text_input("郵便番号", "〒583-0863")
+        issuer_name = st.text_input("発行者（屋号・会社名）", value="尾崎ガス配管")
+        issuer_postal = st.text_input("郵便番号", value="〒583-0863")
       with col4:
         issuer_address = st.text_input(
-            "住所", "大阪府羽曳野市蔵之内342-1"
+            "住所", value="大阪府羽曳野市蔵之内342-1"
         )
         issuer_tel = st.text_input("TEL・FAX", "072-956-5292")
 
@@ -687,9 +808,29 @@ elif st.session_state.current_page == "請求書作成":
           "client_name": client_name,
           "issue_date": issue_date,
           "total_amount": total_amount_inc,
-          "pdf_bytes": pdf_bytes,
+          "pdf_base64": base64.b64encode(pdf_bytes).decode("utf-8"),
       }
       st.session_state.invoice_history.insert(0, new_hist)
+
+      save_data(
+          INVOICE_HIST_FILE,
+          [
+              {
+                  "id": h.get("id", 1),
+                  "timestamp": h.get("timestamp", ""),
+                  "invoice_no": h.get("invoice_no", ""),
+                  "client_name": h.get("client_name", ""),
+                  "issue_date": h.get("issue_date", ""),
+                  "total_amount": h.get("total_amount", 0),
+                  "pdf_base64": (
+                      base64.b64encode(h.get("pdf_bytes")).decode("utf-8")
+                      if isinstance(h.get("pdf_bytes"), bytes)
+                      else h.get("pdf_base64", "")
+                  ),
+              }
+              for h in st.session_state.invoice_history
+          ],
+      )
 
     st.download_button(
         label="📥 請求書PDFをダウンロード（履歴に自動保存）",
@@ -717,10 +858,10 @@ elif st.session_state.current_page == "請求書作成":
       hist_list = [
           h
           for h in hist_list
-          if kw in h["client_name"].lower()
-          or kw in str(h["invoice_no"]).lower()
-          or kw in h["timestamp"].lower()
-          or kw in h["issue_date"].lower()
+          if kw in h.get("client_name", "").lower()
+          or kw in str(h.get("invoice_no", "")).lower()
+          or kw in h.get("timestamp", "").lower()
+          or kw in h.get("issue_date", "").lower()
       ]
 
     if hist_list:
@@ -729,23 +870,23 @@ elif st.session_state.current_page == "請求書作成":
           c_h1, c_h2, c_h3 = st.columns([2, 2, 1])
           with c_h1:
             st.markdown(
-                f"**No.{item['invoice_no']}  {item['client_name']}**"
+                f"**No.{item.get('invoice_no', '')}  {item.get('client_name', '')}**"
             )
             st.caption(
-                f"発行日: {item['issue_date']} | ダウンロード日時:"
-                f" {item['timestamp']}"
+                f"発行日: {item.get('issue_date', '')} | ダウンロード日時:"
+                f" {item.get('timestamp', '')}"
             )
           with c_h2:
-            st.metric("請求額（税込）", f"¥{item['total_amount']:,}")
+            st.metric("請求額（税込）", f"¥{item.get('total_amount', 0):,}")
           with c_h3:
             st.download_button(
                 label="再ダウンロード",
-                data=item["pdf_bytes"],
+                data=item.get("pdf_bytes", b""),
                 file_name=(
-                    f"請求書_No{item['invoice_no']}_{item['client_name']}.pdf"
+                    f"請求書_No{item.get('invoice_no', '1')}_{item.get('client_name', 'client')}.pdf"
                 ),
                 mime="application/pdf",
-                key=f"dl_hist_{item['id']}",
+                key=f"dl_hist_{item.get('id', 0)}",
             )
         st.divider()
     else:
@@ -799,13 +940,9 @@ elif st.session_state.current_page == "意見ボックス":
               "status": "受付済み",
           }
           st.session_state.feedbacks.insert(0, new_fb)
-
-          # 💾 ファイルに保存！
           save_data(FEEDBACKS_FILE, st.session_state.feedbacks)
 
-          st.success(
-              "ご意見・問い合わせを送信しました！ありがとうございます。（保存されました）"
-          )
+          st.success("ご意見・問い合わせを送信しました！ありがとうございます。")
           st.rerun()
         else:
           st.error("内容を入力してください。")
@@ -818,10 +955,10 @@ elif st.session_state.current_page == "意見ボックス":
       col_fb1, col_fb2 = st.columns([3, 1])
       with col_fb1:
         st.markdown(
-            f"**【{fb['category']}】** （投稿者: {fb['name']}）"
+            f"**【{fb.get('category', '')}】** （投稿者: {fb.get('name', '匿名')}）"
         )
-        st.caption(f"🕒 投稿日時: {fb['timestamp']}")
-        st.write(fb["text"])
+        st.caption(f"🕒 投稿日時: {fb.get('timestamp', '')}")
+        st.write(fb.get("text", ""))
       with col_fb2:
-        st.info(f"ステータス: {fb['status']}")
+        st.info(f"ステータス: {fb.get('status', '受付済み')}")
     st.divider()
