@@ -15,22 +15,36 @@ st.set_page_config(
     page_title="尾崎ガス配管 社内ポータル", page_icon="🔧", layout="wide"
 )
 
-# --- 📱 PWA（アプリ化）用の設定（※必ず PNG画像を使うこと！） ---
+# 1. GitHubにある icon.png の Raw URL を指定
 icon_url = (
     "https://raw.githubusercontent.com/ozakimech/gas-app/main/icon.png"
 )
 
+# 2. JavaScriptを使って、ブラウザの頭（<head>）に強制的にアイコンとPWA設定を挿入する
 st.markdown(
     f"""
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIuWPt+WPs+ODleOCueODrCDnjovnuqDlho3ppKgxLCJzaG9ydF9uYW1lIjogIuaWv+WPs+ODleOCueODrCIsInN0YXJ0X3VybCI6ICIvIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmZmZmYiLCAidGhlbWVfY29sb3IiOiAiIzFlMjkzYiIsICJpY29ucyI6IFt7InNyYyI6ICIvaWNvbi5wbmciLCAic2l6ZXMiOiAiMTkyPDE5MiIsICJ0eXBlIjogImltYWdlL3BuZyJ9XX0=">
-    <link rel="apple-touch-icon" href="{icon_url}">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="尾崎ポータル">
+    <script>
+    const docHead = window.parent.document.querySelector('head');
+    if (docHead) {{
+        // 既存のapple-touch-iconがあれば削除
+        docHead.querySelectorAll('link[rel="apple-touch-icon"], link[rel="manifest"]').forEach(el => el.remove());
+        
+        // 新しい apple-touch-icon を追加
+        const iconLink = document.createElement('link');
+        iconLink.rel = 'apple-touch-icon';
+        iconLink.href = '{icon_url}';
+        docHead.appendChild(iconLink);
+        
+        // メタタグ（iOS用）を追加
+        const metaCap = document.createElement('meta');
+        metaCap.name = 'apple-mobile-web-app-capable';
+        metaCap.content = 'yes';
+        docHead.appendChild(metaCap);
+    }}
+    </script>
     """,
     unsafe_allow_html=True,
 )
-
 # --- 1. ページの基本設定（最初に実行） ---
 st.set_page_config(
     page_title="尾崎ガス配管 社内ポータル", page_icon="📄", layout="wide"
