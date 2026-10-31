@@ -146,11 +146,9 @@ if "projects" not in st.session_state:
           "tasks": [
               {
                   "task_id": 1,
-                  "task_name": "あああああああああ",
-                  "task_memo": "資材置き場は2階通路。注意事項：水圧確認必須",
-                  "floors": {
-                      f"{i}階": False for i in range(1, 9)
-                  },
+                  "task_name": "配管保温材巻き",
+                  "task_memo": "資材置き場は2階通路。",
+                  "floors": {f"{i}階": False for i in range(1, 9)},
               }
           ],
       }
@@ -164,7 +162,7 @@ if "feedbacks" not in st.session_state:
           "timestamp": "2026-10-28 16:00",
           "name": "現場スタッフ",
           "category": "機能改善リクエスト",
-          "text": "チェックリストのすぐ下にメモが書けて使いやすくなりました！",
+          "text": "階数の並びが綺麗になって見やすくなりました！",
           "status": "確認中",
       }
   ]
@@ -404,6 +402,9 @@ elif st.session_state.current_page == "業務内容共有":
               max([p["id"] for p in st.session_state.projects], default=0) + 1
           )
 
+          # 階数は必ず「1階, 2階, 3階...」の順番で固定リストとして生成
+          initial_floors = {f"{i}階": False for i in range(1, int(new_floor_count) + 1)}
+
           new_project = {
               "id": new_id,
               "site_name": new_site_name.strip(),
@@ -433,11 +434,13 @@ elif st.session_state.current_page == "業務内容共有":
     for proj in st.session_state.projects:
       with st.container():
         st.markdown(
-            f"### 🏢 【現場】 {proj['site_name']} （全 {proj['floor_count']} 階）"
+            f"### 【現場】 {proj['site_name']} （全 {proj['floor_count']} 階）"
         )
         st.caption(f"🕒 作成日時: {proj['timestamp']}")
 
-        floors = [f"{i}階" for i in range(1, proj["floor_count"] + 1)]
+        # ── 💡 修正点：階数を数値順（1階, 2階, 3階...）に必ずソートして正確に並べる ──
+        floor_count_val = int(proj.get("floor_count", 3))
+        floors = [f"{i}階" for i in range(1, floor_count_val + 1)]
 
         # ② 作業を追加する「＋」ボタン（エクスパンダー）
         with st.expander(
@@ -480,14 +483,14 @@ elif st.session_state.current_page == "業務内容共有":
               else:
                 st.error("作業名を入力してください。")
 
-        # ③ 作業ごとに、チェックリスト ➡ ★メモ機能★ ➡ 区切り線 ➡ まるごと削除ボタン
+        # ③ 作業ごとに、チェックリスト ➡ メモ ➡ 区切り線 ➡ まるごと削除ボタン
         if proj["tasks"]:
           st.write("#### 🛠️ 登録された作業一覧（チェックリスト）")
           for task in proj["tasks"]:
             with st.container():
               col_t1, col_t2 = st.columns([3, 1])
               with col_t1:
-                st.markdown(f"### 📌 作業名: {task['task_name']}")
+                st.markdown(f"###  作業名: {task['task_name']}")
               with col_t2:
                 if st.button("🗑️ 作業削除", key=f"del_task_{proj['id']}_{task['task_id']}"):
                   proj["tasks"] = [
@@ -504,26 +507,30 @@ elif st.session_state.current_page == "業務内容共有":
                     f: old_floor_data.get(f, {}).get("checked", False) for f in floors
                 }
 
-              # 1. 各階の完了チェック
+              # 1. 各階の完了チェック（スマホでも見やすいように4列グリッドに調整）
               st.write("##### 各階の完了チェック：")
-              chk_cols = st.columns(min(len(floors), 5))
-              for idx, floor in enumerate(floors):
-                col_target = chk_cols[idx % len(chk_cols)]
-                with col_target:
-                  current_chk = task["floors"].get(floor, False)
-                  new_chk = st.checkbox(
-                      f"{floor}",
-                      value=current_chk,
-                      key=f"chk_{proj['id']}_{task['task_id']}_{floor}",
-                  )
-                  if new_chk != current_chk:
-                    task["floors"][floor] = new_chk
-                    save_data(PROJECTS_FILE, st.session_state.projects)
-                    st.rerun()
+              
+              # 4列ずつ綺麗に並べるようにループ処理を修正
+              cols_per_row = 4
+              for i in range(0, len(floors), cols_per_row):
+                row_floors = floors[i : i + cols_per_row]
+                chk_cols = st.columns(len(row_floors))
+                for idx, floor in enumerate(row_floors):
+                  with chk_cols[idx]:
+                    current_chk = task["floors"].get(floor, False)
+                    new_chk = st.checkbox(
+                        f"{floor}",
+                        value=current_chk,
+                        key=f"chk_{proj['id']}_{task['task_id']}_{floor}",
+                    )
+                    if new_chk != current_chk:
+                      task["floors"][floor] = new_chk
+                      save_data(PROJECTS_FILE, st.session_state.projects)
+                      st.rerun()
 
               st.write("")  # 余白
 
-              # 2. ★チェックリストと下部の区切り線の間に配置されたメモ機能★
+              # 2. 作業メモ機能
               current_memo = task.get("task_memo", "")
               updated_memo = st.text_area(
                   "📝 作業メモ（備考・特記事項）",
@@ -533,7 +540,6 @@ elif st.session_state.current_page == "業務内容共有":
                   height=100,
               )
 
-              # メモが変更されたら自動保存
               if updated_memo != current_memo:
                 task["task_memo"] = updated_memo
                 save_data(PROJECTS_FILE, st.session_state.projects)
